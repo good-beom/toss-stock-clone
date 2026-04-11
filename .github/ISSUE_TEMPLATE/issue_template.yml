@@ -1,0 +1,46 @@
+name: ISSUE TEMPLATE
+description: File a ISSUE TEMPLATE
+title: '✨ Feat: '
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ✨ Feat: Implementation of new features and adjustments to existing features to meet requirements.
+
+        🐛 Fix: Resolution of bugs affecting functionality.
+
+        ♻️ Refactor: Improvement and restructuring of code without changing its external behavior.
+
+        💄 Design: Modifications to CSS and overall design elements.
+
+        📝 Doc: Updates and improvements to documentation.
+
+        🚨 Hotfix: Immediate fixes for critical issues.
+
+        ✅ Test: Updates and improvements to tests.
+
+        🧪 Exp: Experimental or demo components and features.
+
+        📦 Chore: Other minor updates.
+
+  - type: textarea
+    id: title
+    attributes:
+      label: ✨ Task Title
+      description: Please provide a brief summary of the task.
+    validations:
+      required: true
+
+  - type: textarea
+    id: content
+    attributes:
+      label: ⚙ Task Content
+      description: Please describe the work to be done.
+      value: '- [ ]:
+
+        - [ ]:
+
+        - [ ]: '
+    validations:
+      required: true
