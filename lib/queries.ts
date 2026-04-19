@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 
-import type { CandleData, Period, StockQuote } from '@/types/stock';
+import type { CandleData, Period, SearchResult, StockQuote } from '@/types/stock';
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -14,6 +14,14 @@ export const stockQuoteOptions = (symbol: string) =>
     queryFn: () => fetchJson<StockQuote>(`/api/stock/${symbol}`),
     refetchInterval: 10_000,
     staleTime: 9_000,
+  });
+
+export const searchOptions = (query: string) =>
+  queryOptions<SearchResult[]>({
+    queryKey: ['search', query],
+    queryFn: () => fetchJson<SearchResult[]>(`/api/search?q=${encodeURIComponent(query)}`),
+    staleTime: 30_000,
+    enabled: query.trim().length > 0,
   });
 
 export const candlesOptions = (symbol: string, period: Period) =>

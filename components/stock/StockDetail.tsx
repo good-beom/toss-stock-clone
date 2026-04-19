@@ -1,10 +1,11 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { PriceHeader } from '@/components/stock/PriceHeader';
 import { PeriodTabs } from '@/components/chart/PeriodTabs';
+import { useRecentSymbols } from '@/hooks/useRecentSymbols';
 import { useStockPrice } from '@/hooks/useStockPrice';
 import type { Period, StockQuote } from '@/types/stock';
 
@@ -21,6 +22,11 @@ interface Props {
 export function StockDetail({ symbol, initialQuote }: Props) {
   const [period, setPeriod] = useState<Period>('1D');
   const { data: quote } = useStockPrice(symbol, initialQuote);
+  const { addSymbol } = useRecentSymbols();
+
+  useEffect(() => {
+    addSymbol(symbol);
+  }, [symbol, addSymbol]);
 
   return (
     <div className="flex flex-col bg-[#161616] min-h-screen text-white">
