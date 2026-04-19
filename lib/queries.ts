@@ -4,7 +4,7 @@ import type { CandleData, Period, StockQuote } from '@/types/stock';
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch: ${url}`);
+  if (!res.ok) throw new Error('Failed to load data');
   return res.json() as Promise<T>;
 }
 
