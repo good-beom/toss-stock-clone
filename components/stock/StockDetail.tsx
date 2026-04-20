@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { PriceHeader } from '@/components/stock/PriceHeader';
+import { StockStats } from '@/components/stock/StockStats';
 import { PeriodTabs } from '@/components/chart/PeriodTabs';
 import { WatchlistButton } from '@/components/stock/WatchlistButton';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -14,7 +15,7 @@ import type { Period, StockQuote } from '@/types/stock';
 
 const CandleChart = dynamic(
   () => import('@/components/chart/CandleChart').then((m) => m.CandleChart),
-  { ssr: false, loading: () => <div className="w-full h-[300px] bg-zinc-900 animate-pulse" /> },
+  { ssr: false, loading: () => <div className="w-full h-[360px] bg-zinc-900 animate-pulse" /> },
 );
 
 interface Props {
@@ -52,6 +53,7 @@ export function StockDetail({ symbol, initialQuote }: Props) {
       </div>
       <CandleChart symbol={symbol} period={period} />
       <PeriodTabs value={period} onValueChange={setPeriod} />
+      <StockStats quote={quote} />
     </div>
   );
 }
