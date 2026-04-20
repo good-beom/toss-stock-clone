@@ -55,6 +55,26 @@ export async function getCandles(symbol: string, period: Period): Promise<Candle
   return candles;
 }
 
+export async function getTopActives(count = 50): Promise<StockQuote[]> {
+  const result = await yf.screener({ scrIds: 'most_actives', count });
+  const quotes: StockQuote[] = [];
+  for (const raw of result.quotes) {
+    const q = raw as unknown as Record<string, unknown>;
+    if (typeof q.regularMarketPrice !== 'number') continue;
+    quotes.push({
+      symbol: String(q.symbol),
+      name: String(q.longName ?? q.shortName ?? q.symbol),
+      price: q.regularMarketPrice,
+      change: typeof q.regularMarketChange === 'number' ? q.regularMarketChange : 0,
+      changePercent: typeof q.regularMarketChangePercent === 'number' ? q.regularMarketChangePercent : 0,
+      volume: typeof q.regularMarketVolume === 'number' ? q.regularMarketVolume : 0,
+      marketCap: typeof q.marketCap === 'number' ? q.marketCap : undefined,
+      currency: typeof q.currency === 'string' ? q.currency : 'USD',
+    });
+  }
+  return quotes;
+}
+
 export async function searchSymbol(query: string): Promise<SearchResult[]> {
   const result = await yf.search(query);
   const out: SearchResult[] = [];

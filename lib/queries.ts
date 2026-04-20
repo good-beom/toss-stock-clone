@@ -33,6 +33,14 @@ export const searchOptions = (query: string) =>
     enabled: query.trim().length > 0,
   });
 
+export const activesOptions = () =>
+  queryOptions<StockQuote[]>({
+    queryKey: ['market', 'actives'],
+    queryFn: () => fetchJson<StockQuote[]>('/api/market/actives'),
+    refetchInterval: 60_000,
+    staleTime: 60_000,
+  });
+
 export const candlesOptions = (symbol: string, period: Period) =>
   queryOptions<CandleData[]>({
     queryKey: ['stock', symbol, 'candles', period],
