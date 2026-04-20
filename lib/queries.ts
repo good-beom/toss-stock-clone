@@ -41,6 +41,14 @@ export const activesOptions = () =>
     staleTime: 60_000,
   });
 
+export const forexRateOptions = () =>
+  queryOptions<{ rate: number }>({
+    queryKey: ['forex', 'usdkrw'],
+    queryFn: () => fetchJson<{ rate: number }>('/api/forex/rate'),
+    staleTime: 3_600_000, // 1 hour
+    refetchInterval: 3_600_000,
+  });
+
 export const candlesOptions = (symbol: string, period: Period) =>
   queryOptions<CandleData[]>({
     queryKey: ['stock', symbol, 'candles', period],

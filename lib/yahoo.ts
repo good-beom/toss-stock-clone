@@ -80,6 +80,11 @@ export async function getTopActives(count = 50): Promise<StockQuote[]> {
   return quotes;
 }
 
+export async function getForexRate(): Promise<number> {
+  const result = await yf.quote('USDKRW=X');
+  return result.regularMarketPrice ?? 1_400;
+}
+
 export async function searchSymbol(query: string): Promise<SearchResult[]> {
   const result = await yf.search(query);
   const out: SearchResult[] = [];
