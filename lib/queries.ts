@@ -13,7 +13,16 @@ export const stockQuoteOptions = (symbol: string) =>
     queryKey: ['stock', symbol, 'quote'],
     queryFn: () => fetchJson<StockQuote>(`/api/stock/${symbol}`),
     refetchInterval: 10_000,
-    staleTime: 9_000,
+    staleTime: 10_000,
+  });
+
+export const watchlistQuotesOptions = (symbols: string[]) =>
+  queryOptions<StockQuote[]>({
+    queryKey: ['watchlist', 'quotes', symbols],
+    queryFn: () => Promise.all(symbols.map((s) => fetchJson<StockQuote>(`/api/stock/${s}`))),
+    refetchInterval: 10_000,
+    staleTime: 10_000,
+    enabled: symbols.length > 0,
   });
 
 export const searchOptions = (query: string) =>

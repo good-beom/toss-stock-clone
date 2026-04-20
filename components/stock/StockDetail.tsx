@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { PriceHeader } from '@/components/stock/PriceHeader';
 import { PeriodTabs } from '@/components/chart/PeriodTabs';
+import { WatchlistButton } from '@/components/stock/WatchlistButton';
 import { useRecentSymbols } from '@/hooks/useRecentSymbols';
 import { useStockPrice } from '@/hooks/useStockPrice';
 import type { Period, StockQuote } from '@/types/stock';
@@ -31,6 +32,9 @@ export function StockDetail({ symbol, initialQuote }: Props) {
   return (
     <div className="flex flex-col bg-[#161616] min-h-screen text-white">
       <PriceHeader quote={quote} />
+      <div className="px-4 pb-2">
+        <WatchlistButton symbol={symbol} name={quote.name} />
+      </div>
       <CandleChart symbol={symbol} period={period} />
       <PeriodTabs value={period} onValueChange={setPeriod} />
     </div>
