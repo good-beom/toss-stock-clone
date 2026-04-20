@@ -24,6 +24,11 @@ export async function getQuote(symbol: string): Promise<StockQuote> {
     volume: result.regularMarketVolume ?? 0,
     marketCap: result.marketCap ?? undefined,
     currency: result.currency ?? 'USD',
+    marketState: result.marketState ?? undefined,
+    fiftyTwoWeekHigh: result.fiftyTwoWeekHigh ?? undefined,
+    fiftyTwoWeekLow: result.fiftyTwoWeekLow ?? undefined,
+    trailingPE: result.trailingPE ?? undefined,
+    averageVolume: result.averageDailyVolume3Month ?? undefined,
   };
 }
 

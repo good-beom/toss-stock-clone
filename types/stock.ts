@@ -11,6 +11,12 @@ export interface StockQuote {
   volume: number;
   marketCap?: number;
   currency: string;
+  // detail stats
+  marketState?: string;
+  fiftyTwoWeekHigh?: number;
+  fiftyTwoWeekLow?: number;
+  trailingPE?: number;
+  averageVolume?: number;
 }
 
 export interface CandleData {
