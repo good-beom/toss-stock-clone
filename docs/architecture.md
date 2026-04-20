@@ -284,6 +284,18 @@ const sortedKey = [...symbols].sort();
 queryOptions({ queryKey: ['watchlist', 'quotes', sortedKey], ... })
 ```
 
+`WatchlistPage`에서는 `items.map(i => i.symbol)`을 `useMemo`로 안정화해 Query key 해시와 Map 구성의 재실행을 `items` 변경 시로만 한정한다. `items`가 바뀌지 않으면 symbols 배열 참조도 그대로 유지된다.
+
+```ts
+const symbols = useMemo(() => items.map((i) => i.symbol), [items]);
+const { data: quotes } = useQuery(watchlistQuotesOptions(symbols));
+const quotesBySymbol = useMemo(() => {
+  const map = new Map<string, StockQuote>();
+  for (const q of quotes ?? []) map.set(q.symbol, q);
+  return map;
+}, [quotes]);
+```
+
 ### 다국어 지원 — React Context
 
 `LanguageProvider`가 언어 상태를 관리하며 `localStorage`에 설정을 저장한다. 앱 전체를 `Providers`에서 감싸므로 어느 컴포넌트에서나 `useLanguage()`로 접근할 수 있다.
@@ -334,6 +346,25 @@ chart.priceScale('volume').applyOptions({
 ```
 
 볼륨 바 색상은 캔들 방향과 동일하게 `close >= open` 조건으로 빨강/파랑 반투명(`#ef444460` / `#3b82f660`)을 적용한다.
+
+캔들과 볼륨 두 시리즈의 데이터를 주입할 때 `data.map().map()`으로 두 번 순회하는 대신 단일 `for` 루프에서 두 배열을 동시에 구성한다. 할당 수를 절반으로 줄이고 GC 압박을 낮춘다.
+
+```ts
+const candles = new Array(data.length);
+const volumes = new Array(data.length);
+for (let i = 0; i < data.length; i++) {
+  const d = data[i];
+  const time = d.time as UTCTimestamp;
+  candles[i] = { time, open: d.open, high: d.high, low: d.low, close: d.close };
+  volumes[i] = {
+    time,
+    value: d.volume,
+    color: d.close >= d.open ? '#ef444460' : '#3b82f660',
+  };
+}
+seriesRef.current.setData(candles);
+volumeRef.current.setData(volumes);
+```
 
 ### 크로스헤어 OHLCV 툴팁 — React 상태 브리지
 
