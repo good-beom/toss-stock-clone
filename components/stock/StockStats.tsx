@@ -1,7 +1,8 @@
 'use client';
 
+import { useCurrencyDisplay } from '@/hooks/useCurrencyDisplay';
 import { useLanguage } from '@/hooks/useLanguage';
-import { formatMarketCap, formatPrice, formatVolume } from '@/lib/format';
+import { formatMarketCap, formatVolume } from '@/lib/format';
 import type { StockQuote } from '@/types/stock';
 
 interface Props {
@@ -10,16 +11,17 @@ interface Props {
 
 export function StockStats({ quote }: Props) {
   const { tr } = useLanguage();
+  const { formatDisplayPrice } = useCurrencyDisplay();
   const s = tr.stats;
 
   const items: { label: string; value: string | undefined }[] = [
     {
       label: s.high52w,
-      value: quote.fiftyTwoWeekHigh != null ? formatPrice(quote.fiftyTwoWeekHigh, quote.currency) : undefined,
+      value: quote.fiftyTwoWeekHigh != null ? formatDisplayPrice(quote.fiftyTwoWeekHigh, quote.currency) : undefined,
     },
     {
       label: s.low52w,
-      value: quote.fiftyTwoWeekLow != null ? formatPrice(quote.fiftyTwoWeekLow, quote.currency) : undefined,
+      value: quote.fiftyTwoWeekLow != null ? formatDisplayPrice(quote.fiftyTwoWeekLow, quote.currency) : undefined,
     },
     {
       label: s.marketCap,

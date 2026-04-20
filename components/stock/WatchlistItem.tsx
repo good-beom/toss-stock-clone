@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 
-import { formatPrice, priceChangeColor, priceChangeSign } from '@/lib/format';
+import { useCurrencyDisplay } from '@/hooks/useCurrencyDisplay';
+import { priceChangeColor, priceChangeSign } from '@/lib/format';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import type { StockQuote, WatchlistItem as WatchlistItemType } from '@/types/stock';
 
@@ -13,6 +14,7 @@ interface Props {
 
 export function WatchlistItem({ item, quote }: Props) {
   const remove = useWatchlist((s) => s.remove);
+  const { formatDisplayPrice } = useCurrencyDisplay();
 
   const color = priceChangeColor(quote?.change ?? 0);
   const sign = priceChangeSign(quote?.change ?? 0);
@@ -28,7 +30,7 @@ export function WatchlistItem({ item, quote }: Props) {
         {quote ? (
           <div className="text-right">
             <p className="text-sm font-medium text-white">
-              {formatPrice(quote.price, quote.currency)}
+              {formatDisplayPrice(quote.price, quote.currency)}
             </p>
             <p className={`text-xs ${color}`}>
               {sign}{quote.changePercent.toFixed(2)}%

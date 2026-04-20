@@ -34,9 +34,13 @@ export function StockDetail({ symbol, initialQuote }: Props) {
     addSymbol(symbol);
   }, [symbol, addSymbol]);
 
+  const gradientClass =
+    quote.change > 0 ? 'from-red-900/20' : quote.change < 0 ? 'from-blue-900/20' : 'from-zinc-800/20';
+
   return (
-    <div className="flex flex-col bg-[#161616] min-h-screen text-white pb-16">
-      <div className="flex items-center px-2 pt-4">
+    <div className="relative flex flex-col bg-[#161616] min-h-screen text-white pb-16">
+      <div className={`absolute inset-x-0 top-0 h-56 bg-gradient-to-b ${gradientClass} to-transparent pointer-events-none`} />
+      <div className="relative flex items-center px-2 pt-4">
         <button
           onClick={() => router.back()}
           aria-label={tr.stock.backLabel}
