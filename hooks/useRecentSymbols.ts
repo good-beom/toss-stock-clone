@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'recent-symbols';
 const MAX_RECENT = 10;
@@ -14,10 +14,11 @@ function readFromStorage(): string[] {
 }
 
 export function useRecentSymbols() {
-  const [symbols, setSymbols] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return [];
-    return readFromStorage();
-  });
+  const [symbols, setSymbols] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSymbols(readFromStorage());
+  }, []);
 
   const addSymbol = useCallback((symbol: string) => {
     setSymbols((prev) => {
