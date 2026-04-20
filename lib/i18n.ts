@@ -32,6 +32,22 @@ export const t = {
     stock: {
       backLabel: 'Go back',
     },
+    stats: {
+      high52w: '52W High',
+      low52w: '52W Low',
+      marketCap: 'Mkt Cap',
+      pe: 'P/E',
+      volume: 'Volume',
+      avgVolume: 'Avg Vol',
+    },
+    marketState: {
+      REGULAR: 'Market Open',
+      PRE: 'Pre-Market',
+      PREPRE: 'Pre-Market',
+      POST: 'After Hours',
+      POSTPOST: 'After Hours',
+      CLOSED: 'Market Closed',
+    },
   },
   ko: {
     nav: {
@@ -63,6 +79,22 @@ export const t = {
     },
     stock: {
       backLabel: '뒤로가기',
+    },
+    stats: {
+      high52w: '52주 최고',
+      low52w: '52주 최저',
+      marketCap: '시가총액',
+      pe: 'P/E',
+      volume: '거래량',
+      avgVolume: '평균 거래량',
+    },
+    marketState: {
+      REGULAR: '정규장',
+      PRE: '장전 거래',
+      PREPRE: '장전 거래',
+      POST: '장후 거래',
+      POSTPOST: '장후 거래',
+      CLOSED: '장 마감',
     },
   },
 } as const;
