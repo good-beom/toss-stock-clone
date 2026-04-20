@@ -5,7 +5,7 @@ import type { CandleData, Period, SearchResult, StockQuote } from '@/types/stock
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 
 const PERIOD_CONFIG = {
-  '1D': { interval: '5m' as const, daysBack: 1 },
+  '1D': { interval: '5m' as const, daysBack: 5 },
   '1W': { interval: '30m' as const, daysBack: 7 },
   '1M': { interval: '1d' as const, daysBack: 30 },
   '3M': { interval: '1d' as const, daysBack: 90 },
@@ -33,7 +33,7 @@ export async function getCandles(symbol: string, period: Period): Promise<Candle
 
   const result = await yf.chart(symbol, { period1, interval });
 
-  return result.quotes.reduce<CandleData[]>((acc, q) => {
+  const candles = result.quotes.reduce<CandleData[]>((acc, q) => {
     if (q.open == null || q.high == null || q.low == null || q.close == null) return acc;
     acc.push({
       time: Math.floor(q.date.getTime() / 1000),
@@ -45,6 +45,34 @@ export async function getCandles(symbol: string, period: Period): Promise<Candle
     });
     return acc;
   }, []);
+
+  // For 1D, keep only the most recent trading day (handles weekends and holidays)
+  if (period === '1D' && candles.length > 0) {
+    const lastDay = new Date(candles[candles.length - 1].time * 1000).toDateString();
+    return candles.filter((c) => new Date(c.time * 1000).toDateString() === lastDay);
+  }
+
+  return candles;
+}
+
+export async function getTopActives(count = 50): Promise<StockQuote[]> {
+  const result = await yf.screener({ scrIds: 'most_actives', count });
+  const quotes: StockQuote[] = [];
+  for (const raw of result.quotes) {
+    const q = raw as unknown as Record<string, unknown>;
+    if (typeof q.regularMarketPrice !== 'number') continue;
+    quotes.push({
+      symbol: String(q.symbol),
+      name: String(q.longName ?? q.shortName ?? q.symbol),
+      price: q.regularMarketPrice,
+      change: typeof q.regularMarketChange === 'number' ? q.regularMarketChange : 0,
+      changePercent: typeof q.regularMarketChangePercent === 'number' ? q.regularMarketChangePercent : 0,
+      volume: typeof q.regularMarketVolume === 'number' ? q.regularMarketVolume : 0,
+      marketCap: typeof q.marketCap === 'number' ? q.marketCap : undefined,
+      currency: typeof q.currency === 'string' ? q.currency : 'USD',
+    });
+  }
+  return quotes;
 }
 
 export async function searchSymbol(query: string): Promise<SearchResult[]> {
