@@ -28,6 +28,6 @@ export const useWatchlist = create<WatchlistState>()(
         })),
       has: (symbol) => get().items.some((item) => item.symbol === symbol),
     }),
-    { name: 'watchlist' },
+    { name: 'watchlist', skipHydration: true },
   ),
 );
