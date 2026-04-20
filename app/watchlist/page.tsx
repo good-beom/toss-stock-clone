@@ -13,7 +13,7 @@ export default function WatchlistPage() {
   const { data: quotes = [] } = useQuery(watchlistQuotesOptions(symbols));
 
   return (
-    <main className="flex flex-col min-h-screen bg-[#161616] text-white px-0 pt-12 pb-8">
+    <main className="flex flex-col min-h-screen bg-[#161616] text-white px-0 pt-12 pb-20">
       <h1 className="text-xl font-bold mb-6 px-4">관심 종목</h1>
 
       {items.length === 0 ? (

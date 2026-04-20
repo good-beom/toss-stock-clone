@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { PriceHeader } from '@/components/stock/PriceHeader';
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export function StockDetail({ symbol, initialQuote }: Props) {
+  const router = useRouter();
   const [period, setPeriod] = useState<Period>('1D');
   const { data: quote } = useStockPrice(symbol, initialQuote);
   const { addSymbol } = useRecentSymbols();
@@ -30,7 +32,18 @@ export function StockDetail({ symbol, initialQuote }: Props) {
   }, [symbol, addSymbol]);
 
   return (
-    <div className="flex flex-col bg-[#161616] min-h-screen text-white">
+    <div className="flex flex-col bg-[#161616] min-h-screen text-white pb-16">
+      <div className="flex items-center px-2 pt-4">
+        <button
+          onClick={() => router.back()}
+          aria-label="뒤로가기"
+          className="p-2 rounded-full hover:bg-zinc-800 transition-colors"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+      </div>
       <PriceHeader quote={quote} />
       <div className="px-4 pb-2">
         <WatchlistButton symbol={symbol} name={quote.name} />
