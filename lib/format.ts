@@ -23,6 +23,10 @@ export function formatVolume(volume: number): string {
   return String(volume);
 }
 
+export function formatKRW(amount: number): string {
+  return '₩' + Math.round(amount).toLocaleString('ko-KR');
+}
+
 export function formatMarketCap(value: number): string {
   if (value >= 1_000_000_000_000) return `${(value / 1_000_000_000_000).toFixed(2)}T`;
   if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;

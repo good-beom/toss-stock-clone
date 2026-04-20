@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
 import { LanguageProvider } from '@/hooks/useLanguage';
+import { useCurrency } from '@/hooks/useCurrency';
 import { useWatchlist } from '@/hooks/useWatchlist';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -16,6 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     useWatchlist.persist.rehydrate();
+    useCurrency.persist.rehydrate();
   }, []);
 
   return (
