@@ -34,6 +34,7 @@ app/
     stock/[symbol]/candles/route.ts # GET /api/stock/:symbol/candles?period=1D
     search/route.ts                 # GET /api/search?q=:query
     forex/rate/route.ts             # GET /api/forex/rate (1시간 ISR 캐시)
+  # 모든 Route Handler에 revalidate 상수 설정 (ISR 캐시 관리)
 
 components/
   BottomNav.tsx                 # 하단 탭 내비게이션 (홈·관심종목) + 언어 토글
@@ -45,7 +46,7 @@ components/
     HomeContent.tsx             # 홈 클라이언트 오케스트레이터 — 인라인 서치바 + 통화 토글 + Most Active
   stock/
     PriceHeader.tsx             # 현재가 / 등락률 표시 + 마켓 상태 배지 — 한국어 모드에서 한국어 이름 병기
-    StockDetail.tsx             # 종목 상세 클라이언트 오케스트레이터 + 뒤로가기 버튼 + 방향성 그라데이션
+    StockDetail.tsx             # 종목 상세 클라이언트 오케스트레이터 + 뒤로가기 버튼 + 통화 토글 버튼 + 방향성 그라데이션
     StockSearchBar.tsx          # 검색 입력 + 결과 목록 + 최근 본 종목 (/search 페이지 전용)
     StockStats.tsx              # 종목 세부 통계 (52W High/Low · Mkt Cap · P/E · Volume · Avg Vol)
     WatchlistButton.tsx         # 관심 종목 추가·제거 토글 버튼
@@ -226,7 +227,10 @@ function useCurrencyDisplay() {
 }
 ```
 
-컴포넌트는 `formatPrice` 대신 `formatDisplayPrice`만 호출하면 통화 변환이 자동 적용된다. 통화 토글 버튼은 홈 페이지 서치바 우측에 배치해 모든 화면에서 설정 변경이 즉시 반영된다.
+컴포넌트는 `formatPrice` 대신 `formatDisplayPrice`만 호출하면 통화 변환이 자동 적용된다. 통화 토글 버튼은 두 곳에 배치되며 동일한 Zustand 스토어를 공유한다.
+
+- **홈 페이지** — 서치바 우측
+- **종목 상세** — 상단 바 우측 (뒤로가기 버튼 반대편)
 
 ### 홈 인라인 검색
 
@@ -271,7 +275,14 @@ const isWatched = useWatchlist((s) => s.items.some((i) => i.symbol === symbol));
 const remove = useWatchlist((s) => s.remove);
 ```
 
-관심 종목 시세는 `WatchlistPage`에서 `watchlistQuotesOptions(symbols)`로 단일 쿼리를 생성해 `Promise.all`로 병렬 fetch한다. WatchlistItem마다 독립 쿼리를 갖는 N+1 폴링 대신 타이머 1개로 전체를 관리한다.
+관심 종목 시세는 `WatchlistPage`에서 `watchlistQuotesOptions(symbols)`로 단일 쿼리를 생성해 병렬 fetch한다. WatchlistItem마다 독립 쿼리를 갖는 N+1 폴링 대신 타이머 1개로 전체를 관리한다.
+
+`Promise.allSettled`를 사용해 개별 종목 조회 실패가 전체 목록을 깨뜨리지 않는다. 결과는 `Map<symbol, StockQuote>`로 변환해 인덱스 대신 심볼로 O(1) 조회한다. query key는 심볼 배열을 정렬한 값으로 구성해 순서 변경에도 불필요한 재요청이 발생하지 않는다.
+
+```ts
+const sortedKey = [...symbols].sort();
+queryOptions({ queryKey: ['watchlist', 'quotes', sortedKey], ... })
+```
 
 ### 다국어 지원 — React Context
 
@@ -341,6 +352,15 @@ chart.subscribeCrosshairMove((param) => {
 ```
 
 `CandleChart` 컴포넌트는 `tooltipData`가 `null`이면 `data[data.length - 1]`(마지막 캔들)로 폴백해, 마우스가 차트 밖에 있어도 OHLCV 정보가 항상 표시된다.
+
+`subscribeCrosshairMove`는 마우스 이동마다 발생하므로 setState 호출 비용을 줄이기 위해 함수형 업데이터로 이전 값과 비교한다. OHLCV + 시간이 모두 같으면 동일한 참조를 반환해 불필요한 리렌더를 방지한다.
+
+```ts
+setTooltipData((prev) => {
+  if (prev !== null && prev.time === time && /* OHLCV 동일 */) return prev;
+  return { time, ...candle, volume: vol };
+});
+```
 
 ### 마켓 상태 배지 — Yahoo Finance marketState
 
