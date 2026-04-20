@@ -40,10 +40,12 @@ components/
   stock/
     PriceHeader.tsx             # 현재가 / 등락률 표시
     StockDetail.tsx             # 종목 상세 클라이언트 오케스트레이터
+    StockSearchBar.tsx          # 검색 입력 + 결과 목록 + 최근 본 종목
 
 hooks/
   useCandleChart.ts             # lightweight-charts 인스턴스 lifecycle 관리
   useStockPrice.ts              # 종목 현재가 polling 훅
+  useRecentSymbols.ts           # localStorage 기반 최근 본 종목 이력 관리
 
 lib/
   yahoo.ts                      # yahoo-finance2 서버 전용 래퍼
@@ -54,6 +56,8 @@ types/
 ```
 
 ## 데이터 흐름
+
+### 종목 상세 페이지
 
 ```
 [브라우저]                [Next.js 서버]             [Yahoo Finance API]
@@ -78,6 +82,24 @@ types/
     │                         │ ──────────────────────────►│
     │  CandleData[]           │◄────────────────────────── │
     │◄──────────────────────── │                            │
+```
+
+### 종목 검색
+
+```
+[브라우저]
+    │
+    │  input 입력 (즉시 반영)
+    │       │
+    │  useDeferredValue (렌더 블로킹 없이 쿼리 지연)
+    │       │
+    │  GET /api/search?q=:query
+    │ ──────────────────────────► [Next.js 서버]
+    │                                   │  searchSymbol()    [Yahoo Finance API]
+    │                                   │ ──────────────────────────────────────►
+    │                                   │◄────────────────────────────────────── 
+    │  SearchResult[]                   │
+    │◄────────────────────────────────── │
 ```
 
 ## 핵심 아키텍처 원칙
@@ -105,6 +127,25 @@ types/
 2. **클라이언트**: TanStack Query의 `initialData`로 서버 데이터를 hydration → 이후 10초 간격으로 polling
 
 차트(`CandleChart`)는 canvas 기반이므로 `dynamic(..., { ssr: false })`로 SSR을 비활성화하고, 데이터를 기다리는 동안 skeleton을 표시한다.
+
+### 검색 UX — useDeferredValue
+
+외부 debounce 라이브러리 없이 React 내장 `useDeferredValue`로 타이핑 중 렌더링 블로킹을 방지한다.
+
+```
+input 상태 (즉시 반영) → useDeferredValue → useQuery 실행
+```
+
+`deferredQuery`가 바뀌어야 `useQuery`가 실행되므로, 브라우저가 여유 있을 때 검색 요청을 보낸다.
+
+### 최근 본 종목 — localStorage 퍼시스턴스
+
+`useRecentSymbols` 훅이 `localStorage`를 직접 관리한다.
+
+- 종목 상세 페이지 진입 시 `addSymbol(symbol)` 호출 → 심볼 저장
+- 최대 10개, 중복 시 맨 앞으로 이동 (`[symbol, ...prev.filter(s => s !== symbol)].slice(0, 10)`)
+- SSR 환경(`typeof window === 'undefined'`)에서는 빈 배열 반환 — hydration mismatch 방지
+- 서버 상태(TanStack Query)와 무관한 순수 클라이언트 상태이므로 Zustand를 쓰지 않고 `useState`로 관리
 
 ### lightweight-charts v5
 
