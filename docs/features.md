@@ -123,13 +123,55 @@ input 상태 (즉시 반영) → useDeferredValue → useQuery 실행
 
 ---
 
+### 관심 종목 `/watchlist`
+
+종목 상세 페이지에서 관심 종목을 추가·제거하고, 목록 페이지에서 현재가를 실시간으로 확인한다.
+
+**구성 요소**
+
+| 파일 | 역할 |
+|------|------|
+| `hooks/useWatchlist.ts` | Zustand store + `persist` 미들웨어로 localStorage 자동 동기화 |
+| `components/stock/WatchlistButton.tsx` | ☆/★ 토글 버튼 — 종목 상세 페이지에 표시 |
+| `components/stock/WatchlistItem.tsx` | 종목명, 현재가, 등락률 표시 + 제거 버튼 |
+| `app/watchlist/page.tsx` | 관심 종목 목록, 빈 상태 UI 포함 |
+| `lib/format.ts` | `formatPrice` / `priceChangeColor` / `priceChangeSign` 공유 포맷 유틸 |
+
+**상태 관리**
+
+Zustand `persist` 미들웨어가 `localStorage` 직렬화/역직렬화를 자동으로 처리한다. 별도 로드 로직 없이 새로고침 후에도 상태가 유지된다.
+
+```ts
+export const useWatchlist = create<WatchlistState>()(
+  persist((set, get) => ({ ... }), { name: 'watchlist' }),
+);
+```
+
+**현재가 폴링 — 단일 쿼리**
+
+WatchlistItem이 각자 `useQuery`를 갖는 N+1 패턴 대신, 페이지 레벨에서 `watchlistQuotesOptions`로 모든 심볼을 `Promise.all`로 병렬 fetch한다. 폴링 타이머가 N개가 아닌 1개만 생성된다.
+
+```
+watchlistQuotesOptions(symbols)
+  → Promise.all([/api/stock/AAPL, /api/stock/TSLA, ...])
+  → StockQuote[] → 각 WatchlistItem에 props로 전달
+```
+
+**리렌더 최적화**
+
+`useWatchlist()`를 selector 없이 호출하면 관련 없는 항목의 추가·제거에도 모든 컴포넌트가 리렌더된다. 각 컴포넌트는 필요한 값만 선택한다.
+
+```ts
+// WatchlistButton — 자신의 symbol에 해당하는 boolean만 구독
+const isWatched = useWatchlist((s) => s.items.some((i) => i.symbol === symbol));
+
+// WatchlistItem — stable 함수 참조만 구독
+const remove = useWatchlist((s) => s.remove);
+```
+
+---
+
 ## 구현 예정
-
-### 관심 종목 `/watchlist` — Phase 3
-
-- 종목 상세 페이지에서 관심 종목 추가·제거 버튼
-- Zustand store + `localStorage` persist로 새로고침 후에도 유지
-- 관심 종목 목록 페이지에서 각 종목의 현재가 실시간 표시
 
 ### UX 고도화 — Phase 4
 

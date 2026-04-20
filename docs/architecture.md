@@ -41,15 +41,19 @@ components/
     PriceHeader.tsx             # 현재가 / 등락률 표시
     StockDetail.tsx             # 종목 상세 클라이언트 오케스트레이터
     StockSearchBar.tsx          # 검색 입력 + 결과 목록 + 최근 본 종목
+    WatchlistButton.tsx         # 관심 종목 추가·제거 토글 버튼
+    WatchlistItem.tsx           # 관심 종목 목록 단일 항목 (현재가 표시)
 
 hooks/
   useCandleChart.ts             # lightweight-charts 인스턴스 lifecycle 관리
   useStockPrice.ts              # 종목 현재가 polling 훅
   useRecentSymbols.ts           # localStorage 기반 최근 본 종목 이력 관리
+  useWatchlist.ts               # Zustand + persist 관심 종목 전역 상태
 
 lib/
   yahoo.ts                      # yahoo-finance2 서버 전용 래퍼
   queries.ts                    # TanStack Query queryOptions 정의
+  format.ts                     # formatPrice / priceChangeColor / priceChangeSign 공유 포맷 유틸
 
 types/
   stock.ts                      # 공유 타입 + PERIODS 상수
@@ -146,6 +150,22 @@ input 상태 (즉시 반영) → useDeferredValue → useQuery 실행
 - 최대 10개, 중복 시 맨 앞으로 이동 (`[symbol, ...prev.filter(s => s !== symbol)].slice(0, 10)`)
 - SSR 환경(`typeof window === 'undefined'`)에서는 빈 배열 반환 — hydration mismatch 방지
 - 서버 상태(TanStack Query)와 무관한 순수 클라이언트 상태이므로 Zustand를 쓰지 않고 `useState`로 관리
+
+### 관심 종목 — Zustand persist
+
+`useWatchlist`는 Zustand `persist` 미들웨어로 `localStorage` 동기화를 자동 처리한다. `useRecentSymbols`와 달리 여러 컴포넌트(`WatchlistButton`, `WatchlistItem`, `WatchlistPage`)에서 공유되는 전역 상태이므로 Zustand를 선택했다.
+
+리렌더 최적화를 위해 각 컴포넌트는 필요한 슬라이스만 selector로 구독한다.
+
+```ts
+// 자신의 symbol에 해당하는 boolean만 — 다른 종목 추가·제거 시 리렌더 없음
+const isWatched = useWatchlist((s) => s.items.some((i) => i.symbol === symbol));
+
+// stable 함수 참조 — 절대 리렌더 트리거하지 않음
+const remove = useWatchlist((s) => s.remove);
+```
+
+관심 종목 시세는 `WatchlistPage`에서 `watchlistQuotesOptions(symbols)`로 단일 쿼리를 생성해 `Promise.all`로 병렬 fetch한다. WatchlistItem마다 독립 쿼리를 갖는 N+1 폴링 대신 타이머 1개로 전체를 관리한다.
 
 ### lightweight-charts v5
 
