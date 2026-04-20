@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 
+import { useCurrencyDisplay } from '@/hooks/useCurrencyDisplay';
 import { useLanguage } from '@/hooks/useLanguage';
 import { activesOptions } from '@/lib/queries';
-import { formatPrice, formatVolume, priceChangeColor, priceChangeSign } from '@/lib/format';
+import { formatVolume, priceChangeColor, priceChangeSign } from '@/lib/format';
 import { KOREAN_NAMES } from '@/lib/koreanNames';
 import type { StockQuote } from '@/types/stock';
 
@@ -15,6 +16,7 @@ interface Props {
 
 export function ActivesList({ initialData }: Props) {
   const { lang } = useLanguage();
+  const { formatDisplayPrice } = useCurrencyDisplay();
   const { data: stocks } = useQuery({ ...activesOptions(), initialData });
 
   return (
@@ -44,7 +46,7 @@ export function ActivesList({ initialData }: Props) {
 
               <div className="text-right shrink-0">
                 <p className="text-sm font-medium text-white">
-                  {formatPrice(stock.price, stock.currency)}
+                  {formatDisplayPrice(stock.price, stock.currency)}
                 </p>
                 <p className={`text-xs ${color}`}>
                   {sign}{stock.changePercent.toFixed(2)}%

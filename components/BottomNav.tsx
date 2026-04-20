@@ -3,21 +3,16 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { useCurrencyDisplay } from '@/hooks/useCurrencyDisplay';
 import { useLanguage } from '@/hooks/useLanguage';
 
-const TAB_HREFS = ['/', '/search', '/watchlist'] as const;
+const TAB_HREFS = ['/', '/watchlist'] as const;
 
 const TAB_ICONS = {
   '/': (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
       <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  ),
-  '/search': (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.35-4.35" />
     </svg>
   ),
   '/watchlist': (
@@ -29,13 +24,13 @@ const TAB_ICONS = {
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { tr, lang, toggle } = useLanguage();
+  const { tr, lang, toggle: toggleLang } = useLanguage();
+  const { displayCurrency, toggle: toggleCurrency } = useCurrencyDisplay();
 
   if (pathname.startsWith('/stock/')) return null;
 
   const tabLabels = {
     '/': tr.nav.home,
-    '/search': tr.nav.search,
     '/watchlist': tr.nav.watchlist,
   };
 
@@ -57,13 +52,28 @@ export function BottomNav() {
         );
       })}
 
-      <button
-        onClick={toggle}
-        className="flex flex-col items-center justify-center px-4 text-xs text-zinc-500 hover:text-zinc-300 transition-colors shrink-0 border-l border-zinc-800"
-        aria-label="Toggle language"
-      >
-        <span className="font-medium text-sm leading-none">{lang === 'en' ? '한' : 'EN'}</span>
-      </button>
+      <div className="flex items-stretch border-l border-zinc-800 shrink-0">
+        <button
+          onClick={toggleCurrency}
+          className="flex flex-col items-center justify-center px-4 text-xs text-zinc-500 hover:text-zinc-300 transition-colors border-r border-zinc-800"
+          aria-label="Toggle currency"
+        >
+          <span className="font-semibold text-sm leading-none">
+            {displayCurrency === 'USD' ? '$' : '₩'}
+          </span>
+          <span className="mt-0.5 text-[10px]">
+            {displayCurrency === 'USD' ? 'USD' : 'KRW'}
+          </span>
+        </button>
+
+        <button
+          onClick={toggleLang}
+          className="flex flex-col items-center justify-center px-4 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+          aria-label="Toggle language"
+        >
+          <span className="font-medium text-sm leading-none">{lang === 'en' ? '한' : 'EN'}</span>
+        </button>
+      </div>
     </nav>
   );
 }
