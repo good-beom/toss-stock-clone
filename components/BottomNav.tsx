@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { useCurrencyDisplay } from '@/hooks/useCurrencyDisplay';
 import { useLanguage } from '@/hooks/useLanguage';
 
 const TAB_HREFS = ['/', '/watchlist'] as const;
@@ -25,7 +24,6 @@ const TAB_ICONS = {
 export function BottomNav() {
   const pathname = usePathname();
   const { tr, lang, toggle: toggleLang } = useLanguage();
-  const { displayCurrency, toggle: toggleCurrency } = useCurrencyDisplay();
 
   if (pathname.startsWith('/stock/')) return null;
 
@@ -52,28 +50,13 @@ export function BottomNav() {
         );
       })}
 
-      <div className="flex items-stretch border-l border-zinc-800 shrink-0">
-        <button
-          onClick={toggleCurrency}
-          className="flex flex-col items-center justify-center px-4 text-xs text-zinc-500 hover:text-zinc-300 transition-colors border-r border-zinc-800"
-          aria-label="Toggle currency"
-        >
-          <span className="font-semibold text-sm leading-none">
-            {displayCurrency === 'USD' ? '$' : '₩'}
-          </span>
-          <span className="mt-0.5 text-[10px]">
-            {displayCurrency === 'USD' ? 'USD' : 'KRW'}
-          </span>
-        </button>
-
-        <button
-          onClick={toggleLang}
-          className="flex flex-col items-center justify-center px-4 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-          aria-label="Toggle language"
-        >
-          <span className="font-medium text-sm leading-none">{lang === 'en' ? '한' : 'EN'}</span>
-        </button>
-      </div>
+      <button
+        onClick={toggleLang}
+        className="flex flex-col items-center justify-center px-4 text-xs text-zinc-500 hover:text-zinc-300 transition-colors shrink-0 border-l border-zinc-800"
+        aria-label="Toggle language"
+      >
+        <span className="font-medium text-sm leading-none">{lang === 'en' ? '한' : 'EN'}</span>
+      </button>
     </nav>
   );
 }

@@ -19,7 +19,7 @@ interface Props {
 export function HomeContent({ initialData }: Props) {
   const router = useRouter();
   const { lang, tr } = useLanguage();
-  const { formatDisplayPrice } = useCurrencyDisplay();
+  const { displayCurrency, toggle: toggleCurrency, formatDisplayPrice } = useCurrencyDisplay();
   const [input, setInput] = useState('');
   const deferredQuery = useDeferredValue(input.trim());
 
@@ -29,9 +29,9 @@ export function HomeContent({ initialData }: Props) {
 
   return (
     <div className="flex flex-col">
-      {/* Search bar */}
-      <div className="px-4 pt-4 pb-3">
-        <div className="relative">
+      {/* Search bar + currency toggle */}
+      <div className="px-4 pt-4 pb-3 flex items-center gap-2">
+        <div className="relative flex-1">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8" />
@@ -58,6 +58,19 @@ export function HomeContent({ initialData }: Props) {
             </button>
           )}
         </div>
+
+        <button
+          onClick={toggleCurrency}
+          className="shrink-0 flex flex-col items-center justify-center w-12 h-11 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 transition-colors"
+          aria-label="Toggle currency"
+        >
+          <span className="text-sm font-semibold text-white leading-none">
+            {displayCurrency === 'USD' ? '$' : '₩'}
+          </span>
+          <span className="text-[10px] text-zinc-400 mt-0.5">
+            {displayCurrency}
+          </span>
+        </button>
       </div>
 
       {showSearch ? (
