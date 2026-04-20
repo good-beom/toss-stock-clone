@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { PriceHeader } from '@/components/stock/PriceHeader';
 import { PeriodTabs } from '@/components/chart/PeriodTabs';
 import { WatchlistButton } from '@/components/stock/WatchlistButton';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useRecentSymbols } from '@/hooks/useRecentSymbols';
 import { useStockPrice } from '@/hooks/useStockPrice';
 import type { Period, StockQuote } from '@/types/stock';
@@ -23,6 +24,7 @@ interface Props {
 
 export function StockDetail({ symbol, initialQuote }: Props) {
   const router = useRouter();
+  const { tr } = useLanguage();
   const [period, setPeriod] = useState<Period>('1D');
   const { data: quote } = useStockPrice(symbol, initialQuote);
   const { addSymbol } = useRecentSymbols();
@@ -36,7 +38,7 @@ export function StockDetail({ symbol, initialQuote }: Props) {
       <div className="flex items-center px-2 pt-4">
         <button
           onClick={() => router.back()}
-          aria-label="뒤로가기"
+          aria-label={tr.stock.backLabel}
           className="p-2 rounded-full hover:bg-zinc-800 transition-colors"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

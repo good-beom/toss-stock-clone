@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 
+import { useLanguage } from '@/hooks/useLanguage';
 import { activesOptions } from '@/lib/queries';
 import { formatPrice, formatVolume, priceChangeColor, priceChangeSign } from '@/lib/format';
+import { KOREAN_NAMES } from '@/lib/koreanNames';
 import type { StockQuote } from '@/types/stock';
 
 interface Props {
@@ -12,6 +14,7 @@ interface Props {
 }
 
 export function ActivesList({ initialData }: Props) {
+  const { lang } = useLanguage();
   const { data: stocks } = useQuery({ ...activesOptions(), initialData });
 
   return (
@@ -19,6 +22,8 @@ export function ActivesList({ initialData }: Props) {
       {stocks.map((stock, i) => {
         const color = priceChangeColor(stock.changePercent);
         const sign = priceChangeSign(stock.changePercent);
+        const koreanName = lang === 'ko' ? KOREAN_NAMES[stock.symbol] : undefined;
+
         return (
           <li key={stock.symbol}>
             <Link
@@ -28,7 +33,12 @@ export function ActivesList({ initialData }: Props) {
               <span className="text-xs text-zinc-600 w-6 shrink-0 text-right">{i + 1}</span>
 
               <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                <span className="text-sm font-semibold text-white">{stock.symbol}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-white">{stock.symbol}</span>
+                  {koreanName && (
+                    <span className="text-xs text-zinc-300">{koreanName}</span>
+                  )}
+                </div>
                 <span className="text-xs text-zinc-400 truncate">{stock.name}</span>
               </div>
 
