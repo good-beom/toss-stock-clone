@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import { watchlistQuotesOptions } from '@/lib/queries';
+import type { StockQuote } from '@/types/stock';
 import { WatchlistItem } from '@/components/stock/WatchlistItem';
 
 export default function WatchlistPage() {
@@ -16,7 +17,7 @@ export default function WatchlistPage() {
   const { data: quotes } = useQuery(watchlistQuotesOptions(symbols));
 
   const quotesBySymbol = useMemo(() => {
-    const map = new Map<string, (typeof quotes)[number]>();
+    const map = new Map<string, StockQuote>();
     for (const q of quotes ?? []) map.set(q.symbol, q);
     return map;
   }, [quotes]);
