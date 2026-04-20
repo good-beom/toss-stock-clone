@@ -8,6 +8,7 @@ import { PriceHeader } from '@/components/stock/PriceHeader';
 import { StockStats } from '@/components/stock/StockStats';
 import { PeriodTabs } from '@/components/chart/PeriodTabs';
 import { WatchlistButton } from '@/components/stock/WatchlistButton';
+import { useCurrencyDisplay } from '@/hooks/useCurrencyDisplay';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useRecentSymbols } from '@/hooks/useRecentSymbols';
 import { useStockPrice } from '@/hooks/useStockPrice';
@@ -26,6 +27,7 @@ interface Props {
 export function StockDetail({ symbol, initialQuote }: Props) {
   const router = useRouter();
   const { tr } = useLanguage();
+  const { displayCurrency, toggle: toggleCurrency } = useCurrencyDisplay();
   const [period, setPeriod] = useState<Period>('1D');
   const { data: quote } = useStockPrice(symbol, initialQuote);
   const { addSymbol } = useRecentSymbols();
@@ -40,7 +42,7 @@ export function StockDetail({ symbol, initialQuote }: Props) {
   return (
     <div className="relative flex flex-col bg-[#161616] min-h-screen text-white pb-16">
       <div className={`absolute inset-x-0 top-0 h-56 bg-gradient-to-b ${gradientClass} to-transparent pointer-events-none`} />
-      <div className="relative flex items-center px-2 pt-4">
+      <div className="relative flex items-center justify-between px-2 pt-4">
         <button
           onClick={() => router.back()}
           aria-label={tr.stock.backLabel}
@@ -49,6 +51,17 @@ export function StockDetail({ symbol, initialQuote }: Props) {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
+        </button>
+
+        <button
+          onClick={toggleCurrency}
+          className="flex flex-col items-center justify-center w-12 h-9 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 transition-colors mr-2"
+          aria-label="Toggle currency"
+        >
+          <span className="text-sm font-semibold text-white leading-none">
+            {displayCurrency === 'USD' ? '$' : '₩'}
+          </span>
+          <span className="text-[10px] text-zinc-400 mt-0.5">{displayCurrency}</span>
         </button>
       </div>
       <PriceHeader quote={quote} />
