@@ -43,28 +43,29 @@ components/
     ActivesList.tsx             # 거래 상위 종목 리스트 (Client Component)
     HomeHeader.tsx              # 홈 페이지 제목 — 언어 반응형 (Client Component)
   stock/
-    PriceHeader.tsx             # 현재가 / 등락률 표시 — 한국어 모드에서 한국어 이름 병기
+    PriceHeader.tsx             # 현재가 / 등락률 표시 + 마켓 상태 배지 — 한국어 모드에서 한국어 이름 병기
     StockDetail.tsx             # 종목 상세 클라이언트 오케스트레이터 + 뒤로가기 버튼
     StockSearchBar.tsx          # 검색 입력 + 결과 목록 + 최근 본 종목
+    StockStats.tsx              # 종목 세부 통계 (52W High/Low · Mkt Cap · P/E · Volume · Avg Vol)
     WatchlistButton.tsx         # 관심 종목 추가·제거 토글 버튼
     WatchlistItem.tsx           # 관심 종목 목록 단일 항목 (현재가 표시)
 
 hooks/
-  useCandleChart.ts             # lightweight-charts 인스턴스 lifecycle 관리
+  useCandleChart.ts             # lightweight-charts 인스턴스 lifecycle 관리 + 볼륨 바 + 크로스헤어 툴팁 상태
   useLanguage.tsx               # 언어 Context + localStorage 퍼시스턴스 훅
   useRecentSymbols.ts           # localStorage 기반 최근 본 종목 이력 관리
   useStockPrice.ts              # 종목 현재가 polling 훅
   useWatchlist.ts               # Zustand + persist 관심 종목 전역 상태
 
 lib/
-  format.ts                     # formatPrice / formatVolume / priceChangeColor / priceChangeSign
-  i18n.ts                       # EN/KO 번역 문자열 (as const 타입 안전)
+  format.ts                     # formatPrice / formatVolume / formatMarketCap / priceChangeColor / priceChangeSign
+  i18n.ts                       # EN/KO 번역 문자열 (as const 타입 안전) — stats.* / marketState.* 포함
   koreanNames.ts                # 미국 주요 종목·ETF 100+ 한국어 이름 매핑
   queries.ts                    # TanStack Query queryOptions 정의
   yahoo.ts                      # yahoo-finance2 서버 전용 래퍼
 
 types/
-  stock.ts                      # 공유 타입 + PERIODS 상수
+  stock.ts                      # 공유 타입 + PERIODS 상수 — StockQuote에 마켓 상태·52W·P/E·평균 거래량 포함
 ```
 
 ## 데이터 흐름
@@ -249,3 +250,48 @@ chart.addSeries(CandlestickSeries, options)
 ```
 
 `autoSize: true` 옵션으로 ResizeObserver를 내장 처리하며, `useEffect` cleanup에서 반드시 `chart.remove()`를 호출한다.
+
+### 차트 볼륨 바 — 분리된 가격 스케일
+
+볼륨 바(`HistogramSeries`)는 캔들과 동일한 Y축을 공유하면 스케일이 충돌해 캔들이 압축된다. 별도 `priceScaleId: 'volume'`을 지정하고 `scaleMargins: { top: 0.82, bottom: 0 }`로 차트 하단 18% 영역만 사용한다. `visible: false`로 볼륨 축 눈금은 숨긴다.
+
+```ts
+const volume = chart.addSeries(HistogramSeries, { priceScaleId: 'volume' });
+chart.priceScale('volume').applyOptions({
+  scaleMargins: { top: 0.82, bottom: 0 },
+  visible: false,
+});
+```
+
+볼륨 바 색상은 캔들 방향과 동일하게 `close >= open` 조건으로 빨강/파랑 반투명(`#ef444460` / `#3b82f660`)을 적용한다.
+
+### 크로스헤어 OHLCV 툴팁 — React 상태 브리지
+
+lightweight-charts의 크로스헤어 이벤트는 canvas 내부에서만 발생한다. React DOM과 연결하려면 `subscribeCrosshairMove`에서 `setTooltipData()`를 호출해 상태로 끌어올린다.
+
+```ts
+chart.subscribeCrosshairMove((param) => {
+  if (!param.time || !param.seriesData.get(series)) {
+    setTooltipData(null); // 크로스헤어 범위 밖 → 마지막 캔들로 폴백
+    return;
+  }
+  const candle = param.seriesData.get(series) as { open; high; low; close };
+  const vol = (param.seriesData.get(volume) as { value: number })?.value ?? 0;
+  setTooltipData({ time: param.time, ...candle, volume: vol });
+});
+```
+
+`CandleChart` 컴포넌트는 `tooltipData`가 `null`이면 `data[data.length - 1]`(마지막 캔들)로 폴백해, 마우스가 차트 밖에 있어도 OHLCV 정보가 항상 표시된다.
+
+### 마켓 상태 배지 — Yahoo Finance marketState
+
+Yahoo Finance `quote()` 응답의 `marketState` 필드는 `REGULAR | PRE | PREPRE | POST | POSTPOST | CLOSED` 값을 반환한다. `PriceHeader`에서 이를 색상 점(dot) + 레이블로 렌더링한다.
+
+| marketState | 색상 | EN 레이블 | KO 레이블 |
+|-------------|------|---------|---------|
+| REGULAR | green-500 | Market Open | 정규장 |
+| PRE / PREPRE | yellow-400 | Pre-Market | 장전 거래 |
+| POST / POSTPOST | orange-400 | After Hours | 장후 거래 |
+| CLOSED | zinc-500 | Market Closed | 장 마감 |
+
+번역 키는 `lib/i18n.ts`의 `marketState` 섹션에 정의되며, `(tr.marketState as Record<string, string>)[state]` 패턴으로 동적 키 접근 시 타입 안전을 유지한다.

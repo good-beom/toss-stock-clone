@@ -73,9 +73,10 @@ input 상태 (즉시 반영) → useDeferredValue → useQuery 실행
 |---------|------|
 | `StockPage` (Server) | 초기 시세 서버 fetch, symbol 유효성 검증, metadata 생성 |
 | `StockDetail` (Client) | 기간 상태 관리, 뒤로가기 버튼, 최근 종목 기록, 하위 컴포넌트 조립 |
-| `PriceHeader` | 종목명, 현재가, 등락률/등락액 표시 — 한국어 모드에서 한국어 이름 병기 |
+| `PriceHeader` | 종목명, 현재가, 등락률/등락액, 마켓 상태 배지 — 한국어 모드에서 한국어 이름 병기 |
 | `PeriodTabs` | 1D / 1W / 1M / 3M / 1Y / 5Y 기간 선택 |
-| `CandleChart` | OHLCV 캔들차트 렌더링 (no SSR) |
+| `CandleChart` | OHLCV 캔들차트 + 볼륨 바 + 크로스헤어 툴팁 렌더링 (no SSR) |
+| `StockStats` | 52W High/Low · Mkt Cap · P/E · Volume · Avg Vol 통계 그리드 |
 | `WatchlistButton` | 관심 종목 추가·제거 토글 버튼 |
 
 **시세 polling**
@@ -96,6 +97,52 @@ input 상태 (즉시 반영) → useDeferredValue → useQuery 실행
 ```
 daysBack: 5 → Yahoo Finance chart API → 마지막 거래일 날짜로 filter → CandleData[]
 ```
+
+**볼륨 바**
+
+`HistogramSeries`를 별도 가격 스케일(`priceScaleId: 'volume'`)로 생성해 캔들 아래 18% 영역에 표시한다. 축 눈금은 숨기고 색상은 캔들 방향에 따라 반투명 빨강/파랑을 적용한다.
+
+```
+CandlestickSeries (기본 스케일)
+HistogramSeries   (volume 스케일, scaleMargins: { top: 0.82, bottom: 0 })
+```
+
+**OHLCV 크로스헤어 툴팁**
+
+차트 좌측 상단에 고정 오버레이로 O / H / L / C / Vol 값을 표시한다. 마우스가 차트 위에 있을 때는 크로스헤어가 가리키는 캔들 데이터를, 차트 밖에 있을 때는 가장 최근 캔들 데이터를 보여준다.
+
+```
+subscribeCrosshairMove → setTooltipData(candle) → CandleChart 오버레이 렌더링
+크로스헤어 범위 밖 → tooltipData null → data[last] 폴백
+```
+
+시간 포맷은 기간에 따라 달라진다: `1D`는 `HH:MM`, 그 외는 `MMM DD`.
+
+**마켓 상태 배지**
+
+`PriceHeader`에 종목명 옆에 색상 점 + 텍스트 레이블로 현재 거래 세션을 표시한다.
+
+| 상태 | 색상 |
+|------|------|
+| REGULAR (정규장) | 초록 `green-500` |
+| PRE / PREPRE (장전) | 노랑 `yellow-400` |
+| POST / POSTPOST (장후) | 주황 `orange-400` |
+| CLOSED (마감) | 회색 `zinc-500` |
+
+**종목 통계 (`StockStats`)**
+
+기간 탭 아래에 6가지 통계를 2열 리스트로 표시한다. 값이 Yahoo Finance 응답에 없으면 `—`으로 표시한다.
+
+| 항목 | EN | KO |
+|------|----|----|
+| 52주 최고가 | 52W High | 52주 최고 |
+| 52주 최저가 | 52W Low | 52주 최저 |
+| 시가총액 | Mkt Cap | 시가총액 |
+| 주가수익비율 | P/E | P/E |
+| 거래량 | Volume | 거래량 |
+| 평균 거래량 | Avg Vol | 평균 거래량 |
+
+시가총액은 `formatMarketCap`으로 T/B/M 단위로 축약 표기한다.
 
 **차트 색상 (한국 증권 관례)**
 
@@ -202,7 +249,7 @@ const remove = useWatchlist((s) => s.remove);
 
 #### `GET /api/stock/:symbol`
 
-종목의 현재 시세를 반환한다. symbol은 `^[A-Z0-9.\-]{1,12}$` 형식만 허용한다.
+종목의 현재 시세와 상세 통계를 반환한다. symbol은 `^[A-Z0-9.\-]{1,12}$` 형식만 허용한다.
 
 ```json
 {
@@ -213,7 +260,12 @@ const remove = useWatchlist((s) => s.remove);
   "changePercent": 2.59,
   "volume": 55211089,
   "marketCap": 3971820552192,
-  "currency": "USD"
+  "currency": "USD",
+  "marketState": "REGULAR",
+  "fiftyTwoWeekHigh": 260.10,
+  "fiftyTwoWeekLow": 164.08,
+  "trailingPE": 33.45,
+  "averageVolume": 58000000
 }
 ```
 
