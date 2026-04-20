@@ -7,6 +7,8 @@ import type { Period } from '@/types/stock';
 const SYMBOL_RE = /^[A-Z0-9.\-]{1,12}$/;
 const VALID_PERIODS = new Set<string>(PERIODS);
 
+export const revalidate = 60;
+
 type Params = { params: Promise<{ symbol: string }> };
 
 export async function GET(req: Request, { params }: Params) {

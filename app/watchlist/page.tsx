@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { useLanguage } from '@/hooks/useLanguage';
@@ -10,9 +11,15 @@ import { WatchlistItem } from '@/components/stock/WatchlistItem';
 export default function WatchlistPage() {
   const { tr } = useLanguage();
   const items = useWatchlist((s) => s.items);
-  const symbols = items.map((i) => i.symbol);
 
-  const { data: quotes = [] } = useQuery(watchlistQuotesOptions(symbols));
+  const symbols = useMemo(() => items.map((i) => i.symbol), [items]);
+  const { data: quotes } = useQuery(watchlistQuotesOptions(symbols));
+
+  const quotesBySymbol = useMemo(() => {
+    const map = new Map<string, (typeof quotes)[number]>();
+    for (const q of quotes ?? []) map.set(q.symbol, q);
+    return map;
+  }, [quotes]);
 
   return (
     <main className="flex flex-col min-h-screen bg-[#161616] text-white px-0 pt-12 pb-20">
@@ -25,8 +32,8 @@ export default function WatchlistPage() {
         </div>
       ) : (
         <ul className="flex flex-col divide-y divide-zinc-800">
-          {items.map((item, i) => (
-            <WatchlistItem key={item.symbol} item={item} quote={quotes[i]} />
+          {items.map((item) => (
+            <WatchlistItem key={item.symbol} item={item} quote={quotesBySymbol.get(item.symbol)} />
           ))}
         </ul>
       )}

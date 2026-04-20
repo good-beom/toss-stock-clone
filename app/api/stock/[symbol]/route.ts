@@ -4,6 +4,8 @@ import { getQuote } from '@/lib/yahoo';
 
 const SYMBOL_RE = /^[A-Z0-9.\-]{1,12}$/;
 
+export const revalidate = 10;
+
 type Params = { params: Promise<{ symbol: string }> };
 
 export async function GET(_req: Request, { params }: Params) {

@@ -4,6 +4,8 @@ import { searchSymbol } from '@/lib/yahoo';
 
 const MAX_QUERY_LENGTH = 100;
 
+export const revalidate = 300;
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const query = searchParams.get('q') ?? '';
