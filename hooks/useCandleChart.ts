@@ -63,7 +63,7 @@ export function useCandleChart(
 
     chart.subscribeCrosshairMove((param) => {
       if (!param.time || !param.seriesData.get(series)) {
-        setTooltipData(null);
+        setTooltipData((prev) => (prev === null ? prev : null));
         return;
       }
       const candle = param.seriesData.get(series) as {
@@ -73,13 +73,27 @@ export function useCandleChart(
         close: number;
       };
       const vol = (param.seriesData.get(volume) as { value: number } | undefined)?.value ?? 0;
-      setTooltipData({
-        time: param.time as number,
-        open: candle.open,
-        high: candle.high,
-        low: candle.low,
-        close: candle.close,
-        volume: vol,
+      const time = param.time as number;
+      setTooltipData((prev) => {
+        if (
+          prev !== null &&
+          prev.time === time &&
+          prev.open === candle.open &&
+          prev.high === candle.high &&
+          prev.low === candle.low &&
+          prev.close === candle.close &&
+          prev.volume === vol
+        ) {
+          return prev;
+        }
+        return {
+          time,
+          open: candle.open,
+          high: candle.high,
+          low: candle.low,
+          close: candle.close,
+          volume: vol,
+        };
       });
     });
 
@@ -97,15 +111,21 @@ export function useCandleChart(
 
   useEffect(() => {
     if (!seriesRef.current || !volumeRef.current || data.length === 0) return;
-    const mapped = data.map((d) => ({ ...d, time: d.time as UTCTimestamp }));
-    seriesRef.current.setData(mapped);
-    volumeRef.current.setData(
-      mapped.map((d) => ({
-        time: d.time,
+
+    const candles = new Array(data.length);
+    const volumes = new Array(data.length);
+    for (let i = 0; i < data.length; i++) {
+      const d = data[i];
+      const time = d.time as UTCTimestamp;
+      candles[i] = { time, open: d.open, high: d.high, low: d.low, close: d.close };
+      volumes[i] = {
+        time,
         value: d.volume,
         color: d.close >= d.open ? '#ef444460' : '#3b82f660',
-      })),
-    );
+      };
+    }
+    seriesRef.current.setData(candles);
+    volumeRef.current.setData(volumes);
     chartRef.current?.timeScale().fitContent();
   }, [data]);
 

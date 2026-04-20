@@ -16,14 +16,23 @@ export const stockQuoteOptions = (symbol: string) =>
     staleTime: 10_000,
   });
 
-export const watchlistQuotesOptions = (symbols: string[]) =>
-  queryOptions<StockQuote[]>({
-    queryKey: ['watchlist', 'quotes', symbols],
-    queryFn: () => Promise.all(symbols.map((s) => fetchJson<StockQuote>(`/api/stock/${s}`))),
+export const watchlistQuotesOptions = (symbols: string[]) => {
+  const sortedKey = [...symbols].sort();
+  return queryOptions<StockQuote[]>({
+    queryKey: ['watchlist', 'quotes', sortedKey],
+    queryFn: async () => {
+      const settled = await Promise.allSettled(
+        symbols.map((s) => fetchJson<StockQuote>(`/api/stock/${s}`)),
+      );
+      return settled
+        .filter((r): r is PromiseFulfilledResult<StockQuote> => r.status === 'fulfilled')
+        .map((r) => r.value);
+    },
     refetchInterval: 10_000,
     staleTime: 10_000,
     enabled: symbols.length > 0,
   });
+};
 
 export const searchOptions = (query: string) =>
   queryOptions<SearchResult[]>({
